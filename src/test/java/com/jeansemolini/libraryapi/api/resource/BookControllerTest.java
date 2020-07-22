@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class) //subir no contexto do spring
 @ActiveProfiles("test") //ativa profile de test
-@WebMvcTest
+@WebMvcTest(controllers = BookController.class) //define qual controller vai subir no contexto do test
 @AutoConfigureMockMvc //configura o objeto pra fazer as requisições
 public class BookControllerTest {
 
@@ -51,7 +50,7 @@ public class BookControllerTest {
     public void createBookTest() throws Exception {
 
         BookDTO dto = createNewBook();
-        Book savedBook = Book.builder().id(10l).author("Arthur").title("As aventuras").isbn("001").build();
+        Book savedBook = Book.builder().id(10L).author("Arthur").title("As aventuras").isbn("001").build();
 
         BDDMockito.given(service.save(Mockito.any(Book.class))).willReturn(savedBook);
         String json = new ObjectMapper().writeValueAsString(dto);
@@ -115,7 +114,7 @@ public class BookControllerTest {
     @DisplayName("Deve obter informações de um livro")
     public void getBookDetailsTest() throws Exception {
         //cenario (given)
-        Long id = 1l;
+        Long id = 1L;
 
         Book book = Book.builder()
                 .id(id)
@@ -158,7 +157,7 @@ public class BookControllerTest {
     public void deleteBookTest() throws Exception {
 
         BDDMockito.given(service.getById(Mockito.anyLong()))
-                .willReturn(Optional.of(Book.builder().id(1l).build()));
+                .willReturn(Optional.of(Book.builder().id(1L).build()));
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .delete(BOOK_API.concat("/" + 1));
@@ -183,10 +182,10 @@ public class BookControllerTest {
     @Test
     @DisplayName("Deve atualizar um livro")
     public void updateBookTest() throws Exception {
-        Long id = 1l;
+        Long id = 1L;
         String json = new ObjectMapper().writeValueAsString(createNewBook());
 
-        Book updatingBook = Book.builder().id(1l).title("some title").author("some author").isbn("321").build();
+        Book updatingBook = Book.builder().id(1L).title("some title").author("some author").isbn("321").build();
         BDDMockito.given(service.getById(Mockito.anyLong()))
                 .willReturn(Optional.of(updatingBook));
         Book updatedBook = Book.builder().id(id).author("Arthur").title("As aventuras").isbn("321").build();
@@ -228,7 +227,7 @@ public class BookControllerTest {
     @DisplayName("Deve filtrar livros")
     public void findBooksTest() throws Exception {
 
-        Long id = 1l;
+        Long id = 1L;
 
         Book book = Book.builder()
                 .id(id)

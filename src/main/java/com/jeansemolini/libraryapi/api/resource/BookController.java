@@ -1,25 +1,19 @@
 package com.jeansemolini.libraryapi.api.resource;
 
 import com.jeansemolini.libraryapi.api.dto.BookDTO;
-import com.jeansemolini.libraryapi.api.exception.ApiErrors;
-import com.jeansemolini.libraryapi.exception.BusinnessException;
-import com.jeansemolini.libraryapi.model.entity.Book;
 import com.jeansemolini.libraryapi.api.service.BookService;
+import com.jeansemolini.libraryapi.model.entity.Book;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -78,18 +72,5 @@ public class BookController {
                 .collect(Collectors.toList());
 
         return new PageImpl<BookDTO>(list, pageRequest, result.getTotalElements());
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrors handleValidationExceptions(MethodArgumentNotValidException ex) {
-        BindingResult bindingResult = ex.getBindingResult();
-        return new ApiErrors(bindingResult);
-    }
-
-    @ExceptionHandler(BusinnessException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrors handleBusinnessExceptions(BusinnessException ex) {
-        return new ApiErrors(ex);
     }
 }

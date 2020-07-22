@@ -1,0 +1,163 @@
+[33mcommit 65ebb698d65a96c263488dbbb3fb312e80be8792[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: Jean Semolini <jean.maiko@hotmail.com>
+Date:   Tue Jul 21 17:20:24 2020 -0300
+
+    alterações
+
+[1mdiff --git a/src/main/java/com/jeansemolini/libraryapi/api/resource/BookController.java b/src/main/java/com/jeansemolini/libraryapi/api/resource/BookController.java[m
+[1mindex e09e098..b4b46ce 100644[m
+[1m--- a/src/main/java/com/jeansemolini/libraryapi/api/resource/BookController.java[m
+[1m+++ b/src/main/java/com/jeansemolini/libraryapi/api/resource/BookController.java[m
+[36m@@ -7,14 +7,20 @@[m [mimport com.jeansemolini.libraryapi.model.entity.Book;[m
+ import com.jeansemolini.libraryapi.api.service.BookService;[m
+ import org.modelmapper.ModelMapper;[m
+ import org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.data.domain.Page;[m
+[32m+[m[32mimport org.springframework.data.domain.PageImpl;[m
+[32m+[m[32mimport org.springframework.data.domain.Pageable;[m
+ import org.springframework.http.HttpStatus;[m
+ import org.springframework.validation.BindingResult;[m
+ import org.springframework.validation.ObjectError;[m
+ import org.springframework.web.bind.MethodArgumentNotValidException;[m
+ import org.springframework.web.bind.annotation.*;[m
+[32m+[m[32mimport org.springframework.web.server.ResponseStatusException;[m
+ [m
+ import javax.validation.Valid;[m
+ import java.util.List;[m
+[32m+[m[32mimport java.util.Optional;[m
+[32m+[m[32mimport java.util.stream.Collectors;[m
+ [m
+ @RestController[m
+ @RequestMapping("/api/books")[m
+[36m@@ -36,6 +42,44 @@[m [mpublic class BookController {[m
+         return modelMapper.map(entity, BookDTO.class);[m
+     }[m
+ [m
+[32m+[m[32m    @GetMapping("{id}")[m
+[32m+[m[32m    public BookDTO get(@PathVariable Long id) {[m
+[32m+[m[32m        return  service.getById(id)[m
+[32m+[m[32m                       .map(book -> modelMapper.map(book, BookDTO.class))[m
+[32m+[m[32m                       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));[m
+[32m+[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @DeleteMapping("{id}")[m
+[32m+[m[32m    @ResponseStatus(HttpStatus.NO_CONTENT)[m
+[32m+[m[32m    public void delete(@PathVariable Long id) {[m
+[32m+[m[32m        Book book = service.getById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));[m
+[32m+[m[32m        service.delete(book);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @PutMapping("{id}")[m
+[32m+[m[32m    public BookDTO update(@PathVariable Long id, @RequestBody BookDTO dto) {[m
+[32m+[m[32m        return service.getById(id).map(book -> {[m
+[32m+[m
+[32m+[m[32m            book.setAuthor(dto.getAuthor());[m
+[32m+[m[32m            book.setTitle(dto.getTitle());[m
+[32m+[m[32m            book = service.update(book);[m
+[32m+[m[32m            return modelMapper.map(book, BookDTO.class);[m
+[32m+[m
+[32m+[m[32m        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @GetMapping[m
+[32m+[m[32m    public Page<BookDTO> find(BookDTO dto, Pageable pageRequest) {[m
+[32m+[m[32m        Book filter = modelMapper.map(dto, Book.class);[m
+[32m+[m[32m        Page<Book> result = service.find(filter, pageRequest);[m
+[32m+[m[32m        List<BookDTO> list = result.getContent().stream()[m
+[32m+[m[32m                .map(entity -> modelMapper.map(entity, BookDTO.class))[m
+[32m+[m[32m                .collect(Collectors.toList());[m
+[32m+[m
+[32m+[m[32m        return new PageImpl<BookDTO>(list, pageRequest, result.getTotalElements());[m
+[32m+[m[32m    }[m
+[32m+[m
+     @ExceptionHandler(MethodArgumentNotValidException.class)[m
+     @ResponseStatus(HttpStatus.BAD_REQUEST)[m
+     public ApiErrors handleValidationExceptions(MethodArgumentNotValidException ex) {[m
+[1mdiff --git a/src/main/java/com/jeansemolini/libraryapi/api/service/BookService.java b/src/main/java/com/jeansemolini/libraryapi/api/service/BookService.java[m
+[1mindex 9cf100e..63cf21d 100644[m
+[1m--- a/src/main/java/com/jeansemolini/libraryapi/api/service/BookService.java[m
+[1m+++ b/src/main/java/com/jeansemolini/libraryapi/api/service/BookService.java[m
+[36m@@ -1,7 +1,19 @@[m
+ package com.jeansemolini.libraryapi.api.service;[m
+ [m
+ import com.jeansemolini.libraryapi.model.entity.Book;[m
+[32m+[m[32mimport org.springframework.data.domain.Page;[m
+[32m+[m[32mimport org.springframework.data.domain.Pageable;[m
+[32m+[m
+[32m+[m[32mimport java.util.Optional;[m
+ [m
+ public interface BookService {[m
+     Book save(Book any);[m
+[32m+[m
+[32m+[m[32m    Optional<Book> getById(Long id);[m
+[32m+[m
+[32m+[m[32m    void delete(Book book);[m
+[32m+[m
+[32m+[m[32m    Book update(Book book);[m
+[32m+[m
+[32m+[m[32m    Page<Book> find(Book filter, Pageable pageRequest);[m
+ }[m
+[1mdiff --git a/src/main/java/com/jeansemolini/libraryapi/service/impl/BookServiceImpl.java b/src/main/java/com/jeansemolini/libraryapi/service/impl/BookServiceImpl.java[m
+[1mindex adc021c..5482c64 100644[m
+[1m--- a/src/main/java/com/jeansemolini/libraryapi/service/impl/BookServiceImpl.java[m
+[1m+++ b/src/main/java/com/jeansemolini/libraryapi/service/impl/BookServiceImpl.java[m
+[36m@@ -1,12 +1,17 @@[m
+ package com.jeansemolini.libraryapi.service.impl;[m
+ [m
+[32m+[m[32mimport com.jeansemolini.libraryapi.api.service.BookService;[m
+ import com.jeansemolini.libraryapi.exception.BusinnessException;[m
+ import com.jeansemolini.libraryapi.model.entity.Book;[m
+[31m-import com.jeansemolini.libraryapi.api.service.BookService;[m
+ import com.jeansemolini.libraryapi.model.repository.BookRepository;[m
+[31m-import org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.data.domain.Example;[m
+[32m+[m[32mimport org.springframework.data.domain.ExampleMatcher;[m
+[32m+[m[32mimport org.springframework.data.domain.Page;[m
+[32m+[m[32mimport org.springframework.data.domain.Pageable;[m
+ import org.springframework.stereotype.Service;[m
+ [m
+[32m+[m[32mimport java.util.Optional;[m
+[32m+[m
+ @Service[m
+ public class BookServiceImpl implements BookService {[m
+ [m
+[36m@@ -24,4 +29,37 @@[m [mpublic class BookServiceImpl implements BookService {[m
+         }[m
+         return repository.save(book);[m
+     }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public Optional<Book> getById(Long id) {[m
+[32m+[m[32m        return this.repository.findById(id);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public void delete(Book book){[m
+[32m+[m[32m        if (book == null || book.getId() == null) {[m
+[32m+[m[32m            throw new IllegalArgumentException("Book id cant be null");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        this.repository.delete(book);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public Book update(Book book) {[m
+[32m+[m[32m        if (book == null || book.getId() == null) {[m
+[32m+[m[32m            throw new IllegalArgumentException("Book id cant be null");[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return this.repository.save(book);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public Page<Book> find(Book filter, Pageable pageRequest) {[m
+[32m+[m[32m        Example<Book> example = Example.of(filter,[m
+[32m+[m[32m                ExampleMatcher[m
+[32m+[m[32m                        .matching()[m
+[32m+[m[32m                        .withIgnoreCase() //ignora os campos string case sensitive;[m
+[32m+[m[32m                        .withIgnoreNullValues() //ignora valores nulos[m
+[32m+[m[32m                        .withStringMatcher( ExampleMatcher.StringMatcher.CONTAINING ) ); //verifica o conteudo das propriedades[m
+[32m+[m
+[32m+[m[32m        return repository.findAll(example, pageRequest);[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/t
